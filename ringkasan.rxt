@@ -1,0 +1,123 @@
+Nodemon
+Tools pertama adalah nodemon, ia bisa dikatakan wajib digunakan selama proses pengembangan. Pasalnya, dengan tools ini kita tak perlu menjalankan ulang server ketika terjadi perubahan pada berkas JavaScript. Nodemon akan mendeteksi perubahan kode JavaScript dan mengeksekusi ulang secara otomatis.
+
+Untuk menggunakannya, pasanglah package nodemon pada devDependencies dengan mengeksekusi perintah berikut di Terminal proyek:
+
+npm install nodemon --save-dev
+
+
+ESLint
+Tools yang kedua adalah ESLint, ia dapat membantu atau membimbing Anda untuk selalu menuliskan kode JavaScript dengan gaya yang konsisten. Seperti yang Anda tahu, JavaScript tidak memiliki aturan yang baku untuk gaya penulisan kode, bahkan penggunaan semicolon. Karena itu, terkadang kita jadi tidak konsisten dalam menuliskannya.
+
+ESLint dapat mengevaluasi kode yang dituliskan berdasarkan aturan yang Anda terapkan. Anda bisa menuliskan aturannya secara mandiri atau menggunakan gaya penulisan yang sudah ada seperti AirBnb JavaScript Code Style, Google JavaScript Code Style, dan StandardJS Code Style. Kami sarankan Anda untuk mengikuti salah satu code style yang ada.
+
+https://github.com/airbnb/javascript
+https://google.github.io/styleguide/jsguide.html
+https://standardjs.com/
+
+Untuk menggunakan ESLint, pasanglah package ESLint pada devDependencies proyek Anda. Caranya, silakan eksekusi perintah berikut di Terminal:
+
+npm install eslint --save-dev
+
+Sebelum digunakan, Anda perlu melakukan konfigurasi terlebih dahulu. Caranya dengan menggunakan perintah berikut di Terminal proyek.
+
+npx eslint --init
+
+
+How would you like to use ESLint? -> To check, find problems, and enforce code style.
+What type of modules does your project use? -> CommonJS (require/exports).
+Which framework did you use? -> None of these. 
+Does your project use TypeScript? -> N.
+Where does your code run? -> Node (pilih menggunakan spasi).
+How would you like to define a style for your project? -> Use a popular style guide.
+Which style guide do you want to follow? -> (Anda bebas memilih, sebagai contoh pilih AirBnB).
+What format do you want your config file to be in? -> JSON.
+Would you like to …… (seluruh pertanyaan selanjutnya) -> Y.
+
+
+Setelah membuat konfigurasi ESLint, selanjutnya kita gunakan ESLint untuk memeriksa kode JavaScript yang ada pada proyek. Namun sebelum itu, kita perlu menambahkan npm runner berikut di dalam berkas package.json:
+
+"scripts": {
+  "start": "nodemon server.js",
+  "lint": "eslint ./"
+},
+
+
+Struktur project
+ prinsip single responsibility approach. Artinya, kita gunakan satu berkas JavaScript untuk satu tujuan saja. 
+
+  server.js : Memuat kode untuk membuat, mengonfigurasi, dan menjalankan server HTTP menggunakan Hapi.
+  routes.js : Memuat kode konfigurasi routing server seperti menentukan path, method, dan handler yang digunakan.
+  handler.js : Memuat seluruh fungsi-fungsi handler yang digunakan pada berkas routes.
+  notes.js : Memuat data notes yang disimpan dalam bentuk array objek.  
+
+  Membuat HTTP Server
+
+  membuat HTTP server menggunakan Hapi framework.  
+  npm install @hapi/hapi
+
+  Anda bisa menonaktifkan aturan no-console pada berkas .eslintrc.json dengan menambahkan properti no-console dengan nilai off pada rules.
+
+  Kriteria menyebutkan, properti id merupakan string dan harus unik, kita akan menggunakan bantuan library pihak ketiga untuk menghasilkan nilainya. nanoid merupakan salah satu library yang populer untuk menangani ini. Jadi, silakan pasang library tersebut dengan perintah.
+
+npm install nanoid
+Untuk menggunakannya cukup mudah, kita hanya perlu memanggil method nanoid() dan memberikan parameter number yang merupakan ukuran dari string-nya.
+
+Same-Origin Policy
+
+Server dapat menampung sebuah website, aplikasi, gambar, video, dan masih banyak lagi. Ketika server menampung website, mungkin beberapa data gambar, video, stylesheet biasanya diambil dari alamat server lain atau origin yang berbeda. Contohnya stylesheet yang diambil dari Bootstrap CDN ataupun gambar yang diperoleh dari server Unsplash. Hal ini wajar dan biasa dilakukan.
+
+Namun apakah Anda tahu bahwa tidak semua data bisa diambil dari origin yang berbeda? Contohnya data JSON yang didapatkan melalui teknik XMLHTTPRequest atau fetch. Jika website meminta sesuatu menggunakan teknik tersebut dari luar origin-nya, maka permintaan tersebut akan ditolak. Itu disebabkan oleh kebijakan same-origin. Kasus ini terjadi pada aplikasi client dan web server yang kita buat.
+
+Origin terdiri dari tiga hal: protokol, host, dan port number. Origin dari aplikasi client kita adalah
+
+http://ec2-13-212-153-62.ap-southeast-1.compute.amazonaws.com:8000/
+
+Di mana protokolnya adalah http://, host-nya adalah ec2-13-212-153-62.ap-southeast-1.compute.amazonaws.com, dan port-nya adalah :8000.
+
+ Cross-origin resource sharing (CORS).
+
+ Cukup mudah! Pada web server, kita hanya perlu memberikan nilai header ‘Access-Control-Allow-Origin’ dengan nilai origin luar yang akan mengkonsumsi datanya (aplikasi client).
+
+
+ const response = h.response({ error: false, message: 'Catatan berhasil ditambahkan' });
+ 
+response.header('Access-Control-Allow-Origin', 'http://ec2-13-212-153-62.ap-southeast-1.compute.amazonaws.com:8000/');
+ 
+return response;
+
+Atau Anda bisa menggunakan tanda * pada nilai origin untuk memperbolehkan data dikonsumsi oleh seluruh origin.
+
+const response = h.response({ error: false, message: 'Catatan berhasil ditambahkan' });
+ 
+response.header('Access-Control-Allow-Origin', '*');
+ 
+return response;
+
+Good news! Penerapannya akan jauh lebih mudah bila Anda menggunakan Hapi. Dengan Hapi, CORS dapat ditetapkan pada spesifik route dengan menambahkan properti options.cors di konfigurasi route. Contohnya seperti ini:
+
+{
+  method: 'POST',
+  path: '/notes',
+  handler: addNoteHandler,
+  options: {
+    cors: {
+      origin: ['*'],
+    },
+  },
+},
+
+Bila ingin cakupannya lebih luas alias CORS diaktifkan di seluruh route yang ada di server, Anda bisa tetapkan CORS pada konfigurasi ketika hendak membuat server dengan menambahkan properti routes.cors. Contohnya seperti ini:
+
+const server = Hapi.server({
+  port: 5000,
+  host: 'localhost',
+  routes: {
+    cors: {
+      origin: ['*'],
+    },
+  },
+});
+
+
+untuk menghapus data pada array berdasarkan index, gunakan method array splice().
